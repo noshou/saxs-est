@@ -1,7 +1,7 @@
 
 
 (* load df *)
-let df = Owl_dataframe.of_csv ~sep:',' "f0.csv"
+let df = Owl_dataframe.of_csv ~sep:',' "data/regular_scattering_factor/f0.csv"
 
 (** gets f0 given a Q value, where:
 f_0(Q) = ∑a_i*e^(-b_i * (Q)^2) + c,
