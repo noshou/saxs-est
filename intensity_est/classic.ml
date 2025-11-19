@@ -18,8 +18,8 @@ let classic (fp: string) : Owl_dataframe.t * float =
     (* load xyz data *)
     let df_coords = load_xyz fp |> Owl_dataframe.to_rows in 
 	
-	(* this is the normalization constant; makes I(Q) be in range [0,1] *)
-	let normalize = (float_of_int (Array.length df_coords) *. float_of_int (Array.length df_coords)) in 
+	  (* this is the normalization constant; makes I(Q) be in range [0,1] *)
+	  let normalize = (float_of_int (Array.length df_coords) *. float_of_int (Array.length df_coords)) in 
 
     (* create empty dataframe for I(Q) values *)
     let df_scatts = Owl_dataframe.make [|"Q"; "I_Q"|] in 
@@ -30,15 +30,13 @@ let classic (fp: string) : Owl_dataframe.t * float =
     (* ref for total time spent on calculations *)
     let tt = ref (Int64.of_float 0.) in 
 
-	(* increment for number of steps (25) *)
-	let ii = ref 0 in 
+    (* increment for number of steps (25) *)
+    let ii = ref 0 in 
     
 	while !ii < 25 do 
         
         (* current I(Q) value *)
         let qi = ref 0. in 
-        
-        (* track number of calculations done *)
 
         (* calculate pairwise summation *)
         Array.iter ( fun i -> 
@@ -63,30 +61,31 @@ let classic (fp: string) : Owl_dataframe.t * float =
                 
                 (* start timer *)
                 let start_time_1 = Mtime_clock.now () in 
+                
                 (* calculate |rᵢ - rⱼ| *)
                 let dist = sqrt (
                     (i_r.(0) -. j_r.(0))**2.
                     +. (i_r.(1)-.j_r.(1))**2. 
                     +. (i_r.(2)-.j_r.(2)) **2.)
                 in 
+                
                 (* stop timer; calculate span and add to time spent *)
                 let end_time_1 = Mtime_clock.now () in 
                 let span1 = Mtime.span start_time_1 end_time_1 in
 
                 (* if |r_i - r_j| == 0, limit(x->0) of sin(x)/x = 1. Since we cannot divide by zero,
-				we set sin(x)/x = 1 and our term becomes f_i * conjugate(f_i) *)
+				        we set sin(x)/x = 1 and our term becomes f_i * conjugate(f_i) *)
                 let contribution = 
-					if Float.abs dist < 1e-12 then
-						let start_time_2 = Mtime_clock.now () in
-						let intensity = (Complex.mul i_f (Complex.conj i_f)).re in 
-						let end_time_2 = Mtime_clock.now () in
-						(intensity, Mtime.span start_time_2 end_time_2)
+                    if Float.abs dist < 1e-12 then
+                        let start_time_2 = Mtime_clock.now () in
+                        let intensity = (Complex.mul i_f (Complex.conj i_f)).re in 
+                        let end_time_2 = Mtime_clock.now () in
+                        (intensity, Mtime.span start_time_2 end_time_2)
                     else 
                         let start_time_2 = Mtime_clock.now () in
 
                         (* calculate Q * |r_i - r_j| *)
                         let q_dist = !qa *. dist in 
-						Printf.printf "%f\n" q_dist;
                         
                         (* calculate  Q*|r_i-r_j*)
                         let sin_q_dist = (sin q_dist) /. q_dist in
@@ -108,7 +107,7 @@ let classic (fp: string) : Owl_dataframe.t * float =
 
                 (* add to qi *)
                 let start_time_3 = Mtime_clock.now () in 				
-				qi := !qi +. intensity;
+                qi := !qi +. intensity;
                 let end_time_3 = Mtime_clock.now () in 
                 let span3 = Mtime.span start_time_3 end_time_3 in 
 
@@ -121,13 +120,14 @@ let classic (fp: string) : Owl_dataframe.t * float =
 		
 		(*We have to pack qa and qi into an Owl_dataframe.elts array 
 		which can then be passed a row to the dataframe. Before we do this we must 
-		normalize the intensity s.t. I(Q) in [0, 1]*)		
+		normalize the intensity*)		
 		let q = Owl_dataframe.pack_float !qa in
 		let i = !qi /. normalize |> Owl_dataframe.pack_float  in 
         Owl_dataframe.append_row df_scatts [|q;i|];
                 
-        (* Print progress
-        Printf.printf "Q = %f, I(Q) = %f\n%!" !qa !qi; *)
+        (* Print progress *)
+        Printf.printf "Q = %f, I(Q) = %f\n%!" !qa !qi; 
+        
         (* increment qa *)
         qa := !qa +. 0.02;
 		ii := !ii + 1

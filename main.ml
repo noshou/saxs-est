@@ -1,5 +1,5 @@
 let () = 
-    let res = Intensity_est.classic "data/test.xyz" in 
+    let res = Intensity_est.classic "data/perlecan.xyz" in 
     let (df, tt) = res in 
     Owl_dataframe.to_csv ~sep:',' df "res.csv";
     let fname = "time-to-completion.txt" in 
