@@ -1,4 +1,4 @@
-
+(* 
 
 (* recursively defined kd tree (either empty, or a node w/ subtree)*)
 type kdtree = 
@@ -16,4 +16,4 @@ and node = {
     dt: point;
     dm: int 
 }
-
+ *)
