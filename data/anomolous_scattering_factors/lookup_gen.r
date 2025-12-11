@@ -3,7 +3,7 @@ library(tidyverse)
 library(jsonlite)
 
 # load all TSV files 
-tsv_paths <- list.files(pattern = "\\.tsv$", full.names = TRUE)
+tsv_paths <- list.files(path = , pattern = "\\.tsv$", full.names = TRUE)
 # initialize empty df
 df_cache <- NULL 
 
