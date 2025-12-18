@@ -1,0 +1,2 @@
+Library generates f90 modules from XYZ coordinate files in the data directory. Generated files can be 
+extremely large, so they are deleted after compilation. A list of available xyz module names is printed as an output.

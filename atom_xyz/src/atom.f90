@@ -1,7 +1,6 @@
 !! Atom module: provides operations on atomic coordinate data
 module atom_mod
 	use iso_fortran_env, only: real64
-	use xyz_data_mod, only: n_atoms, elements, x_coords, y_coords, z_coords
 	implicit none
 
 	private
@@ -10,14 +9,12 @@ module atom_mod
 	public :: coord, atom
 	
 	! Public interface
-	public :: n_atoms  ! Re-export from xyz_data_mod
-	public :: create_atom, load_atom
+	public :: create_atom
 	public :: get_xyz, get_name, get_element
 	public :: get_form_factor
 	public :: atom_to_string
 	public :: cmp_by_axis, cmp_by_coords
 	public :: calc_distance
-	public :: get_all_atoms
 
 	! Type definitions
 	
@@ -51,39 +48,6 @@ contains
 		new_atom%xyz = position
 		new_atom%element = trim(element_name)
 	end function create_atom
-
-	!! Loads an atom from the xyz_data_mod by index
-	function load_atom(idx) result(a)
-		integer, intent(in) :: idx
-		type(atom) :: a
-		type(coord) :: position
-
-		! Validate index
-		if (idx < 1 .or. idx > n_atoms) then
-			write(*, '(A, I0, A, I0)') 'ERROR in load_atom: Index ', &
-				idx, ' out of bounds. Valid range: 1 to ', n_atoms
-			error stop
-		end if
-
-		! Create atom from data arrays
-		position%x = x_coords(idx)
-		position%y = y_coords(idx)
-		position%z = z_coords(idx)
-		
-		a = create_atom(position, elements(idx))
-	end function load_atom
-
-	!! Loads all atoms from xyz_data_mod into an array
-	function get_all_atoms() result(atoms)
-		type(atom) :: atoms(n_atoms)
-		integer :: i
-
-		do i = 1, n_atoms
-			atoms(i) = load_atom(i)
-		end do
-	end function get_all_atoms
-
-	! Accessors
 
 	!! Returns the xyz coordinates of an atom
 	function get_xyz(a) result(position)
