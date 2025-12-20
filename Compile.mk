@@ -4,14 +4,16 @@
 
 # ============================================================================
 # COMPILER CONFIGURATION
+# generated files can be extrremly large so compiler loves complaining: 
+# -w suppresses them
 # ============================================================================
 FC          = gfortran
-FFLAGS      = -O3 -march=native -mcmodel=large -fmax-array-constructor=500000 -pedantic -Wno-tabs
+FFLAGS      = -w -std=f2023 -O3 -march=native -mcmodel=large -fmax-array-constructor=500000
 
 # OCaml tools
-OCAMLFIND   = ocamlfind
-OC          = $(OCAMLFIND) ocamlopt
-OPAM        = opam
+OCAMLFIND    = ocamlfind
+OC           = $(OCAMLFIND) ocamlopt
+OPAM         = opam
 
 # ============================================================================
 # DIRECTORY STRUCTURE
@@ -39,38 +41,38 @@ AXY_PARSE_DIR=$(AXY_DIR)/xyz_parse
 # FORM_FACT LIBRARY CONFIGURATION
 # ============================================================================
 # Source files
-FF_F0_SRC   = $(FF_SRC_DIR)/f0.f90
-FF_F12_SRC  = $(FF_SRC_DIR)/f1_f2.f90
-FF_FF_SRC   = $(FF_SRC_DIR)/form_fact.f90
+FF_F0_SRC    = $(FF_SRC_DIR)/f0.f90
+FF_F12_SRC   = $(FF_SRC_DIR)/f1_f2.f90
+FF_FF_SRC    = $(FF_SRC_DIR)/form_fact.f90
 
 # Object files
-FF_F0_OBJ   = $(FF_BLD_DIR)/f0.o
-FF_F12_OBJ  = $(FF_BLD_DIR)/f1_f2.o
-FF_FF_OBJ   = $(FF_BLD_DIR)/form_fact.o
+FF_F0_OBJ    = $(FF_BLD_DIR)/f0.o
+FF_F12_OBJ   = $(FF_BLD_DIR)/f1_f2.o
+FF_FF_OBJ    = $(FF_BLD_DIR)/form_fact.o
 
 # Library
-FF_LIB      = $(FF_LIB_DIR)/form_fact.a
+FF_LIB       = $(FF_LIB_DIR)/form_fact.a
 
 # Data files
-FF_F0_DATA  = $(FF_DATA_DIR)/f0_factors/f0.csv
-FF_F12_DATA = $(FF_DATA_DIR)/f1_f2_factors/(12412.8)eV_f1_f2.json
+FF_F0_DATA   = $(FF_DATA_DIR)/f0_factors/f0.csv
+FF_F12_DATA  = $(FF_DATA_DIR)/f1_f2_factors/(12412.8)eV_f1_f2.json
 
 # ============================================================================
 # ATOM_XYZ LIBRARY CONFIGURATION
 # ============================================================================
 
 # Source files
-AXY_ATM_SRC = $(AXY_SRC_DIR)/atom.f90
+AXY_ATM_SRC  = $(AXY_SRC_DIR)/atom.f90
 
 # Object files
-AXY_ATM_OBJ = $(AXY_BLD_DIR)/atom.o
-AXY_XYZ_OBJ = $(patsubst $(AXY_DATA_DIR)/%.xyz,$(AXY_BLD_DIR)/xyz_%.o,$(wildcard $(AXY_DATA_DIR)/*.xyz))
+AXY_ATM_OBJ  = $(AXY_BLD_DIR)/atom.o
+AXY_XYZ_OBJ  = $(patsubst $(AXY_DATA_DIR)/%.xyz,$(AXY_BLD_DIR)/xyz_%.o,$(wildcard $(AXY_DATA_DIR)/*.xyz))
 
 # Library
-AXY_LIB     = $(AXY_LIB_DIR)/atom_xyz.a
+AXY_LIB      = $(AXY_LIB_DIR)/atom_xyz.a
 
 # Available atom modules
-AXY_LST 	= $(AXY_BLD_DIR)/xyz_modules.txt
+AXY_LST 	 = $(AXY_BLD_DIR)/xyz_modules.txt
 
 # ============================================================================
 # PHONY TARGETS
@@ -79,11 +81,12 @@ AXY_LST 	= $(AXY_BLD_DIR)/xyz_modules.txt
         parse-f0 parse-f1_f2 parse-xyz check-ocaml check-deps-csv \
         check-deps-yojson check-deps-str help clean-formfacts \
 		clean-objects build-dirs-atom_xyz parse-xyz tabulate-xyz \
+		postamble \
 
 # ============================================================================
 # MAIN TARGETS
 # ============================================================================
-all: form_fact atom_xyz clean-objects
+all: form_fact atom_xyz clean-objects postamble
 
 help:
 	@echo "Available targets:"
@@ -99,11 +102,14 @@ help:
 	@echo "  parse-f1_f2      - Parse f1_f2 anomalous factors from JSON"
 	@echo "  parse-xyz        - Parse XYZ coordinate files"
 
+# ============================================================================
+# PREAMBLE (shows AXY_LST) growing
+# ============================================================================
 
 # ============================================================================
 # FORM_FACT LIBRARY BUILD
 # ============================================================================
-form_fact: check-form_fact $(FF_LIB)
+form_fact: $(FF_LIB)
 
 # Parse f0 scattering factors
 parse-f0: check-deps-csv
@@ -118,16 +124,6 @@ parse-f1_f2: check-deps-yojson
 		./f1_f2_gen "$(FF_F12_DATA)" && \
 		mv f1_f2.f90 $(FF_SRC_DIR)/ && \
 		rm -rf f1_f2_gen $(FF_PARSE_DIR)/*.cmi $(FF_PARSE_DIR)/*.cmx $(FF_PARSE_DIR)/*.o
-
-
-# check if f0.f90 and f1_f2.f90 are present; if they are not, build them
-check-form_fact:
-	@if [ ! -f "$(FF_F0_SRC)" ]; then \
-		$(MAKE) --no-print-directory parse-f0 ; \
-	fi
-	@if [ ! -f "$(FF_F12_SRC)" ]; then \
-		$(MAKE) --no-print-directory parse-f1_f2 ; \
-	fi
 
 $(FF_LIB): $(FF_F0_OBJ) $(FF_F12_OBJ) $(FF_FF_OBJ) | $(FF_LIB_DIR)
 	@ar rcs $@ $^
@@ -150,17 +146,19 @@ $(FF_FF_OBJ): $(FF_FF_SRC) $(FF_F0_OBJ) $(FF_F12_OBJ) | $(FF_BLD_DIR) $(FF_MOD_D
 
 # Check and parse f0 if needed
 $(FF_F0_SRC): | check-deps-csv
-	@if [ ! -f "$(FF_F0_SRC)" ]; then \
-		echo "f0.f90 not found, parsing from CSV data..." ; \
-		$(MAKE) --no-print-directory parse-f0 ; \
-	fi
+	@echo "f0.f90 not found, parsing from $(FF_F0_DATA)"
+	@$(OC) -package csv -linkpkg $(FF_PARSE_DIR)/f0.ml -o f0_gen && \
+		./f0_gen "$(FF_F0_DATA)" && \
+		mv f0.f90 $(FF_SRC_DIR)/ && \
+		rm -rf f0_gen $(FF_PARSE_DIR)/*.cmi $(FF_PARSE_DIR)/*.cmx $(FF_PARSE_DIR)/*.o
 
 # Check and parse f1_f2 if needed
 $(FF_F12_SRC): | check-deps-yojson
-	@if [ ! -f "$(FF_F12_SRC)" ]; then \
-		echo "f1_f2.f90 not found, parsing from JSON data..." ; \
-		$(MAKE) --no-print-directory parse-f1_f2 ; \
-	fi
+	@echo "f1_f2.f90 not found, parsing from $(FF_F12_DATA)"
+	@$(OC) -package yojson,str -linkpkg $(FF_PARSE_DIR)/f1_f2.ml -o f1_f2_gen && \
+		./f1_f2_gen "$(FF_F12_DATA)" && \
+		mv f1_f2.f90 $(FF_SRC_DIR)/ && \
+		rm -rf f1_f2_gen $(FF_PARSE_DIR)/*.cmi $(FF_PARSE_DIR)/*.cmx $(FF_PARSE_DIR)/*.o
 
 # ============================================================================
 # ATOM_XYZ LIBRARY BUILD
@@ -188,7 +186,6 @@ parse-xyz:
 
 # tabulates xyz modules
 tabulate-xyz:
-	@rm -f $(AXY_LST)
 	@for f in $(AXY_DATA_DIR)/*.xyz; do \
 		echo "xyz_$$(basename "$$f" .xyz)_mod.mod"; \
 	done > $(AXY_LST)
@@ -196,8 +193,8 @@ tabulate-xyz:
 # compile files
 $(AXY_ATM_OBJ): $(AXY_ATM_SRC) | $(AXY_BLD_DIR) $(AXY_MOD_DIR) $(FF_MOD_DIR)
 	@$(FC) $(FFLAGS) -I$(FF_MOD_DIR) -J$(AXY_MOD_DIR) -c $< -o $@
-
 $(AXY_BLD_DIR)/xyz_%.o: $(AXY_TMP_DIR)/xyz_%.f90 | $(AXY_BLD_DIR) $(AXY_MOD_DIR)
+	@echo "compiling: $<"
 	@$(FC) $(FFLAGS) -I$(AXY_MOD_DIR) -J$(AXY_MOD_DIR) -c $< -o $@
 
 # create static library
@@ -251,6 +248,18 @@ define check_and_install
 	fi
 endef
 
+
+# ============================================================================
+# postamble
+# ============================================================================
+
+postamble:
+	@echo "=================================="
+	@echo "compilation complete"
+	@echo "compiled xyz molecules: $(AXY_LST)"
+	@echo "=================================="
+
+
 # ============================================================================
 # CLEAN TARGETS
 # ============================================================================
@@ -258,11 +267,11 @@ endef
 clean: clean-form_fact clean-atom_xyz clean-objects
 clean-form_fact:
 	@rm -rf $(FF_BLD_DIR)
-clean-formfacts:
-	@rm -f $(FF_F0_SRC) $(FF_F12_SRC)
 clean-atom_xyz:
 	@rm -rf $(AXY_BLD_DIR)
 	@rm -rf $(AXY_TMP_DIR)
 	@rm -rf $(AXY_DIR)/*.o
 clean-objects:
 	@find . -type f -name '*.o' -delete
+clean-formfacts: clean
+	@rm -f $(FF_F0_SRC) $(FF_F12_SRC)

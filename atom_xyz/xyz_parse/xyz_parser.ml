@@ -109,9 +109,9 @@ let load_xyz fp =
       itr := !itr + 1
     done;
     close_in f;
-    !atoms  
+    List.rev !atoms  
   with 
-  | End_of_file -> close_in f; !atoms 
+  | End_of_file -> close_in f; List.rev !atoms 
   | e -> close_in_noerr f; raise e
 
 
@@ -137,100 +137,82 @@ let xyz_toFortran xyz_fp =
   Printf.fprintf oc "!! Atomic coordinate data from XYZ file\n";
   Printf.fprintf oc "!! This module provides raw coordinate data for use with atom_mod\n";
   Printf.fprintf oc "module %s_mod\n" base_name;
-  Printf.fprintf oc "\tuse iso_fortran_env, only: real64\n";
-  Printf.fprintf oc "\timplicit none\n\n";
-  Printf.fprintf oc "\tprivate\n\n";
+  Printf.fprintf oc "    use iso_fortran_env, only: real64\n";
+  Printf.fprintf oc "    implicit none\n\n";
+  Printf.fprintf oc "    private\n\n";
   
   (* public interface *)
-  Printf.fprintf oc "\t! Public interface\n";
-  Printf.fprintf oc "\tpublic :: n_atoms\n";
-  Printf.fprintf oc "\tpublic :: elements, x_coords, y_coords, z_coords\n";
-  Printf.fprintf oc "\tpublic :: get_atom_data\n";
-  Printf.fprintf oc "\tpublic :: get_all_atoms\n\n";
+  Printf.fprintf oc "    ! Public interface\n";
+  Printf.fprintf oc "    public  :: n_atoms\n";
+  Printf.fprintf oc "    private :: elements, x_coords, y_coords, z_coords\n";
+  Printf.fprintf oc "    public  :: get_atoms\n\n";
   
   (* module data *)
-  Printf.fprintf oc "\t! Module data\n";
-  Printf.fprintf oc "\tinteger, parameter :: n_atoms = %d\n\n" (List.length atoms);
+  Printf.fprintf oc "    ! Module data\n";
+  Printf.fprintf oc "    integer, parameter :: n_atoms = %d\n\n" (List.length atoms);
   
   (* write element names *)
-  Printf.fprintf oc "\t! Element symbols\n";
-  Printf.fprintf oc "\tcharacter(len=4), parameter :: elements(%d) = [ &\n" (List.length elements);
+  Printf.fprintf oc "    ! Element symbols\n";
+  Printf.fprintf oc "    character(len=4), parameter :: elements(%d) = [ &\n" (List.length elements);
   List.iteri (fun idx elem ->
     if idx == 0 then
-      Printf.fprintf oc "\t\t\t'%-4s'" elem
+      Printf.fprintf oc "            '%-4s'" elem
     else
-      Printf.fprintf oc ", &\n\t\t\t'%-4s'" elem
+      Printf.fprintf oc ", &\n            '%-4s'" elem
   ) elements;
   Printf.fprintf oc " ]\n\n";
   
   (* write x coordinates *)
-  Printf.fprintf oc "\t! X coordinates (Angstroms)\n";
-  Printf.fprintf oc "\treal(real64), parameter :: x_coords(%d) = [ &\n" (List.length x_coords);
+  Printf.fprintf oc "    ! X coordinates (Angstroms)\n";
+  Printf.fprintf oc "    real(real64), parameter :: x_coords(%d) = [ &\n" (List.length x_coords);
   List.iteri (fun idx x ->
     if idx == 0 then
-      Printf.fprintf oc "\t\t\t%f_real64" x
+      Printf.fprintf oc "            %f_real64" x
     else
-      Printf.fprintf oc ", &\n\t\t\t%f_real64" x
+      Printf.fprintf oc ", &\n            %f_real64" x
   ) x_coords;
   Printf.fprintf oc " ]\n\n";
   
   (* write y coordinates *)
-  Printf.fprintf oc "\t! Y coordinates (Angstroms)\n";
-  Printf.fprintf oc "\treal(real64), parameter :: y_coords(%d) = [ &\n" (List.length y_coords);
+  Printf.fprintf oc "    ! Y coordinates (Angstroms)\n";
+  Printf.fprintf oc "    real(real64), parameter :: y_coords(%d) = [ &\n" (List.length y_coords);
   List.iteri (fun idx y ->
     if idx == 0 then
-      Printf.fprintf oc "\t\t\t%f_real64" y
+      Printf.fprintf oc "            %f_real64" y
     else
-      Printf.fprintf oc ", &\n\t\t\t%f_real64" y
+      Printf.fprintf oc ", &\n            %f_real64" y
   ) y_coords;
   Printf.fprintf oc " ]\n\n";
   
   (* write z coordinates *)
-  Printf.fprintf oc "\t! Z coordinates (Angstroms)\n";
-  Printf.fprintf oc "\treal(real64), parameter :: z_coords(%d) = [ &\n" (List.length z_coords);
+  Printf.fprintf oc "    ! Z coordinates (Angstroms)\n";
+  Printf.fprintf oc "    real(real64), parameter :: z_coords(%d) = [ &\n" (List.length z_coords);
   List.iteri (fun idx z ->
     if idx == 0 then
-      Printf.fprintf oc "\t\t\t%f_real64" z
+      Printf.fprintf oc "            %f_real64" z
     else
-      Printf.fprintf oc ", &\n\t\t\t%f_real64" z
+      Printf.fprintf oc ", &\n            %f_real64" z
   ) z_coords;
   Printf.fprintf oc " ]\n\n";
   
   (* write methods *)
   Printf.fprintf oc "contains\n\n";
   
-  (* get_atom_data subroutine - returns raw data for one atom *)
-  Printf.fprintf oc "\t! Returns element and coordinates for a given atom index\n";
-  Printf.fprintf oc "\tsubroutine get_atom_data(idx, element, x, y, z)\n";
-  Printf.fprintf oc "\t\t\tinteger, intent(in) :: idx\n";
-  Printf.fprintf oc "\t\t\tcharacter(len=10), intent(out) :: element\n";
-  Printf.fprintf oc "\t\t\treal(real64), intent(out) :: x, y, z\n\n";
-  Printf.fprintf oc "\t\t\tif (idx < 1 .or. idx > n_atoms) then\n";
-  Printf.fprintf oc "\t\t\t\t\twrite(*, '(A, I0, A, I0)') 'ERROR in get_atom_data: Index ', &\n";
-  Printf.fprintf oc "\t\t\t\t\t\t\tidx, ' out of bounds. Valid range: 1 to ', n_atoms\n";
-  Printf.fprintf oc "\t\t\t\t\terror stop\n";
-  Printf.fprintf oc "\t\t\tend if\n\n";
-  Printf.fprintf oc "\t\t\telement = elements(idx)\n";
-  Printf.fprintf oc "\t\t\tx = x_coords(idx)\n";
-  Printf.fprintf oc "\t\t\ty = y_coords(idx)\n";
-  Printf.fprintf oc "\t\t\tz = z_coords(idx)\n";
-  Printf.fprintf oc "\tend subroutine get_atom_data\n\n";
-  
-  (* get_all_atoms function - returns array of atom objects *)
-  Printf.fprintf oc "\t! Returns all atoms as an array of atom objects\n";
-  Printf.fprintf oc "\t! Requires: use atom_mod, only: atom, coord, create_atom\n";
-  Printf.fprintf oc "\tfunction get_all_atoms() result(atoms)\n";
-  Printf.fprintf oc "\t\t\tuse atom_mod, only: atom, coord, create_atom\n";
-  Printf.fprintf oc "\t\t\ttype(atom) :: atoms(n_atoms)\n";
-  Printf.fprintf oc "\t\t\ttype(coord) :: position\n";
-  Printf.fprintf oc "\t\t\tinteger :: i\n\n";
-  Printf.fprintf oc "\t\t\tdo i = 1, n_atoms\n";
-  Printf.fprintf oc "\t\t\t\t\tposition%%x = x_coords(i)\n";
-  Printf.fprintf oc "\t\t\t\t\tposition%%y = y_coords(i)\n";
-  Printf.fprintf oc "\t\t\t\t\tposition%%z = z_coords(i)\n";
-  Printf.fprintf oc "\t\t\t\t\tatoms(i) = create_atom(position, elements(i))\n";
-  Printf.fprintf oc "\t\t\tend do\n";
-  Printf.fprintf oc "\tend function get_all_atoms\n\n";
+  (* get_atoms function - returns array of atom objects *)
+  Printf.fprintf oc "    ! Returns all atoms as an array of atom objects\n";
+  Printf.fprintf oc "    ! Requires: use atom_mod, only: atom, coord, create_atom\n";
+  Printf.fprintf oc "    function get_atoms() result(atoms)\n";
+  Printf.fprintf oc "        use atom_mod, only: atom, coord, create_atom\n";
+  Printf.fprintf oc "        type(atom) :: atoms(n_atoms)\n";
+  Printf.fprintf oc "        type(coord) :: position\n";
+  Printf.fprintf oc "        integer :: i\n\n";
+  Printf.fprintf oc "        do i = 1, n_atoms\n";
+  Printf.fprintf oc "            position%%x = x_coords(i)\n";
+  Printf.fprintf oc "            position%%y = y_coords(i)\n";
+  Printf.fprintf oc "            position%%z = z_coords(i)\n";
+  Printf.fprintf oc "            atoms(i) = create_atom(position, elements(i))\n";
+  Printf.fprintf oc "        end do\n";
+  Printf.fprintf oc "    end function get_atoms\n\n";
   
   (* close module *)
   Printf.fprintf oc "end module %s_mod\n" base_name;
@@ -239,7 +221,7 @@ let xyz_toFortran xyz_fp =
 (* Main entry point; allows multiple inputs to be sent and parsed at the same time *)
 let () =
   if Array.length Sys.argv < 2 then begin
-    Printf.eprintf "Usage: %s [<input.xyz>] n" Sys.argv.(0);
+    Printf.eprintf "Usage: %s <input.xyz> [<input2.xyz> ...]\n" Sys.argv.(0);
     exit 1
   end;
 
