@@ -5,11 +5,6 @@
 !! 2. Computes binomial coefficient s_choose_2 = s!/(2!(s-2)!)
 !! 3. For each weight-frequency pair, computes c_choose_2 and accumulates sum
 !! 4. Returns estimated weight as w_est = s_choose_2 / sum
-!! 
-!! This function computes an estimated weight using a proportional estimation
-!! algorithm based on the input weights, frequencies, and various parameters.
-!! The sample size is calculated based on the advice parameter and epsilon,
-!! with optional ceiling or floor rounding.
 !!
 !! @param[in] w      Array of weights       (must be same size as f)
 !! @param[in] f      Array of frequencies   (must be same size as w)
@@ -17,20 +12,20 @@
 !! @param[in] e      Epsilon parameter, must satisfy 0 < epsilon < 1 
 !! @param[in] u      Rounding flag: .true. for ceiling, .false. for floor (logical)
 !!
-!! @return w_est     Estimated weight (real, double precision)
+!! @return w_est     Estimated weight
 function propest(w, f, a, e, u) result(w_est)
     use, intrinsic :: iso_c_binding, only: c_double
     implicit none
     
     ! Input parameters
-    real(c_double), dimension(:), intent(in) :: w    !< Array of weights
+    complex(c_double), dimension(:), intent(in) :: w !< Array of weights
     integer, dimension(:), intent(in) :: f           !< Array of frequencies
     real(c_double), intent(in) :: a                  !< Advice parameter (>= # nodes)
     real(c_double), intent(in) :: e                  !< Epsilon (0 < e < 1)
     logical, intent(in) :: u                         !< Ceiling flag
     
     ! Return value
-    real(c_double) :: w_est                          !< Estimated weight
+    complex(c_double) :: w_est                       !< Estimated weight
     
     ! Local variables
     integer :: s                                     !< Sample size
@@ -45,7 +40,7 @@ function propest(w, f, a, e, u) result(w_est)
     integer :: c_choose_2                            !< Binomial coefficient C(f(i),2)
     integer :: c_fact                                !< Factorial of f(i)
     integer :: c_incr                                !< Incrementer for c factorial
-    real(c_double) :: sum                            !< Accumulator for weighted sum
+    complex(c_double) :: sum                         !< Accumulator for weighted sum
     
     ! Calculate sample size based on rounding mode
     if (u) then
@@ -76,11 +71,11 @@ function propest(w, f, a, e, u) result(w_est)
     s_choose_2 = s_fact / (2 * p_fact)
     
     ! Accumulate sum of (C(f(i),2) / w(i)) for all weights
-    sum = 0
+    sum = cmplx(0.0_c_double, 0.0_c_double, kind=c_double)
     do i = 1, size(w) 
         ! Calculate binomial coefficient C(f(i),2)
         if (f(i) == 1) then
-            ! Edge case: frequency = 1, C(1,2) is undefined, use 
+            ! Edge case: frequency = 1, C(1,2) is undefined, use 0
             c_choose_2 = 0
         else 
             ! Calculate f(i)!
