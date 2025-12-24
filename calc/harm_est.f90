@@ -12,7 +12,21 @@
 !! @param[in] e      Epsilon parameter, must satisfy 0 < epsilon < 1 
 !! @param[in] u      Rounding flag: .true. for ceiling, .false. for floor (logical)
 !!
-!! @return w_est     Estimated form factor weight (W)
+!! @return w_est     Estimated form factor weight (W/n)
 function harm_est(w, f, a, e, u) result(w_est)
+    use, intrinsic :: iso_c_binding, only: c_double
+    implicit none
     
+    ! Input parameters
+    complex(c_double), dimension(:), intent(in) :: w !< Array of weights
+    integer, dimension(:), intent(in) :: f           !< Array of frequencies
+    real(c_double), intent(in) :: a                  !< Advice parameter (>= # nodes)
+    real(c_double), intent(in) :: e                  !< Epsilon (0 < e < 1)
+    logical, intent(in) :: u                         !< Ceiling flag
+    
+    ! Return value
+    complex(c_double) :: w_est                       !< Estimated weight
+    
+    
+
 end function harm_est
