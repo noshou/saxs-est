@@ -14,7 +14,6 @@ typedef struct {
     double *i_vals;    /**< Pointer to intensity array */
     int timing;        /**< Timing in milliseconds */
     int size;          /**< Number of data points */
-    char *name;        /**< dataset name - NOT NULL TERMINATED! */
 } estimate;
 
 /**
@@ -27,10 +26,10 @@ typedef struct {
  * @pre init_ocaml() must be called first
  * @pre OCaml "data_out" function registered via Callback.register
  * @pre est->q_vals and est->i_vals must have est->size elements each
- * @pre est->name must be null-terminated
+ * @pre pth must be null-terminated
  * @pre No headers in arrays - function adds them
  */
-void fortran_to_ocaml(estimate *est, char *fp) {
+void fortran_to_ocaml(estimate *est, char *pth) {
     CAMLparam0(); // expects no ocaml arguments
     
     // 5 ocaml variables:
@@ -91,7 +90,7 @@ void fortran_to_ocaml(estimate *est, char *fp) {
     ocm_lst = cns_opo;
     
     // allocate file name (null-terminated, so use caml_copy_string)
-    ocm_nme = caml_copy_string(fp);
+    ocm_nme = caml_copy_string(pth);
     
     // Call OCaml function
     static const value *closure = NULL; 

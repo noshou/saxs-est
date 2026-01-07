@@ -21,14 +21,12 @@
 !! @param k         kdt tree
 !! @param r         radius to search within
 !! @param q_vals    Q values to calculate I(Q); NOTE: assumed to be in valid range!
-!! @param name      Name of dataset
 !!
 !! @return          The time it took to run (nanoseconds) and
 !!                  array of q vs I_real (intensity_estimate type)
-function debeyeEst_kdt(k, r, q_vals, name) result(intensity_estimate)
+function debeyeEst_kdt(k, r, q_vals) result(intensity_estimate)
     type(kdt), intent(in) :: k
     real(c_double), intent(in) :: r
-    character(len=*), intent(in) :: name
     integer :: n_q                              
     real(c_double), dimension(:), intent(in) :: q_vals
     
@@ -102,7 +100,7 @@ function debeyeEst_kdt(k, r, q_vals, name) result(intensity_estimate)
     timing = int((finish - start) / rate, kind=c_int)      
     
     ! output estimate
-    intensity_estimate = new_intensity(timing, q_vals, intensity, name)
+    intensity_estimate = new_intensity(timing, q_vals, intensity)
     
     ! Clean up
     deallocate(atoms, intensity)                            

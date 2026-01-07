@@ -17,13 +17,11 @@
 !!
 !! @param atoms     List of atom objects in molecule
 !! @param q_vals    Q values to calculate I(Q); NOTE: assumed to be in valid range!
-!! @param name      Name of dataset
 !!
 !! @return          The time it took to run (nanoseconds) and
 !!                  array of q vs I_real (intensity_estimate type)
-function debeyeEst_radial(atoms, q_vals, name) result(intensity_estimate)
+function debeyeEst_radial(atoms, q_vals) result(intensity_estimate)
     ! input parameters
-    character(len=*), intent(in) :: name
     type(atom), dimension(:), intent(in) :: atoms
     real(c_double), dimension(:), intent(in) :: q_vals
 
@@ -97,7 +95,7 @@ function debeyeEst_radial(atoms, q_vals, name) result(intensity_estimate)
     timing = int((finish - start) / rate, kind=c_int)
 
     ! output results
-    intensity_estimate = new_intensity(timing, q_vals, intensity, name)
+    intensity_estimate = new_intensity(timing, q_vals, intensity)
 
     ! clean up
     deallocate(intensity)

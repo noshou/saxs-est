@@ -1,6 +1,6 @@
 !> Fortran-OCaml bridge for exporting intensity estimates to CSV
 module csv_interface
-    use, intrinsic :: iso_c_binding; use estimate
+    use, intrinsic :: iso_c_binding; use estimate_mod
     implicit none; private; public :: est_wrap
     
     !> OCaml runtime initialization flag
@@ -9,11 +9,11 @@ module csv_interface
     interface 
         !> C bridge function to export data to OCaml CSV writer
         !! @param est Intensity estimate structure
-        !! @param fp C pointer to null-terminated file path
-        subroutine fortran_to_ocaml(est, fp) bind(C, name="fortran_to_ocaml")
+        !! @param pth C pointer to null-terminated output path
+        subroutine fortran_to_ocaml(est, pth) bind(C, name="fortran_to_ocaml")
             import :: estimate, c_ptr
             type(estimate), intent(in) :: est
-            type(c_ptr), value :: fp
+            type(c_ptr), value :: pth 
         end subroutine fortran_to_ocaml
         
         !> @brief Initialize OCaml runtime (call once)
@@ -25,15 +25,14 @@ contains
 
     !> Export intensity estimate to CSV file via OCaml
     !! @param est Intensity estimate to export
-    !! @param out_dir Output directory path
+    !! @param pth Output path
     !! @return path of output
-    function est_wrap(est, out_dir) result(csv_path_out)
+    subroutine est_wrap(est, pth)
         
         type(estimate), intent(in) :: est
-        character(len=*), intent(in) :: out_dir
+        character(len=*), intent(in) :: pth
         character(len=:, kind=c_char), allocatable, target :: csv_path
-        character(len=:), allocatable :: csv_path_out
-        
+        character(len=256), allocatable :: path_build
         ! Initialize OCaml runtime on first call
         if (.not. is_init) then
             call init_ocaml()
@@ -41,14 +40,11 @@ contains
         end if
         
         ! Build null-terminated file path
-        csv_path = trim(out_dir) // est%name // ".csv" // c_null_char
+        csv_path = pth // c_null_char
         
         ! Export to CSV
         call fortran_to_ocaml(est, c_loc(csv_path))
 
-        ! Output file path
-        csv_path_out = trim(out_dir) // est%name // ".csv"
-
-    end function est_wrap
+    end subroutine est_wrap
     
 end module csv_interface

@@ -16,16 +16,13 @@
 !! @param[in] a         Advice parameter for weight estimation (should be >= number of nodes)
 !! @param[in] e         Epsilon parameter for accuracy control (must satisfy 0 < e < 1)
 !! @param[in] c         Rounding mode flag: .true. for ceiling, .false. for floor
-!! @param[in] name      Dataset identifier/name for the output structure
 !!
 !! @return              intensity_estimate type containing:
 !!                      - Execution time in nanoseconds
 !!                      - Q values array
 !!                      - Calculated intensity values I(Q)
-!!                      - Dataset name
-function prop_radial(k, q_vals, a, e, c, name) result(intensity_estimate)
+function propEst_radial(k, q_vals, a, e, c) result(intensity_estimate)
     type(kdt), intent(in) :: k
-    character(len=*), intent(in) :: name
     real(c_double), intent(in) :: a  !< Advice parameter (>= # nodes)
     real(c_double), intent(in) :: e  !< Epsilon (0 < e < 1)
     logical, intent(in) :: c         !< Ceiling flag
@@ -99,9 +96,9 @@ function prop_radial(k, q_vals, a, e, c, name) result(intensity_estimate)
     timing = int((finish - start) / rate, kind=c_int)
     
     ! output estimate
-    intensity_estimate = new_intensity(timing, q_vals, intensity, name)
+    intensity_estimate = new_intensity(timing, q_vals, intensity)
     
     ! cleanup
     deallocate(atoms, intensity)
     
-end function prop_radial
+end function propEst_radial

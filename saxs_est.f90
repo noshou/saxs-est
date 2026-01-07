@@ -1,13 +1,12 @@
-
 ! cli module
 module main_mod
     use, intrinsic :: iso_c_binding
-    use estimate
+    use estimate_mod
     use form_fact_mod, only: get_q_values
-    use csv_interface
+    use csv_interface_mod
     
     ! generated atom modules "use"
-    include "atom_xyz/_build/mod_uses.txt"
+    include "_build/inc/mod_uses.inc"
 
     implicit none
     private
@@ -28,10 +27,11 @@ contains
         type(kdt) :: kdt_tree
         type(atom), dimension(:), allocatable :: atoms  
         real(c_double), allocatable :: q_vals(:)
+        character(len=*) :: name
         
         ! variables for file I/O
         integer :: xyz_unit, iostat_val, s, e, m, atms  ! FIXED: Added atms
-        character(len=200) :: buff, name, mode
+        character(len=200) :: buff, mode
         character(len=*), parameter :: xyz_start_match = "xyz_"
         character(len=*), parameter :: xyz_end_match = "_mod.mod"
         
@@ -64,7 +64,7 @@ contains
             name = trim(buff)(s+1:len_trim(buff) - e)
             
             ! add switch cases here - defines which atom module to use
-            include "atom_xyz/_build/mod_switches.txt"  ! FIXED: path
+            include "_build/inc/mod_switches.inc"
             atms = size(atoms)
 
             ! build KD-tree
@@ -131,26 +131,30 @@ contains
             
             
             print*, "Running debeyeEst_radial..."
-            deby_rad = debeyeEst_radial(atoms, q_vals, name)  ! FIXED: atoms not kdt_tree
-            path    = est_wrap(deby_rad, out_dir)
+            deby_rad = debeyeEst_radial(atoms, q_vals)  ! FIXED: atoms not kdt_tree
+            path    = out_dir//"/"//"debeye_radial_"//name//".csv"
+            est_wrap(deby_rad, path)
             print*, "analysis saved at: ", path
             print*, ""
 
             print*, "Running debeyeEst_kdt..."
-            deby_kdt = debeyeEst_kdt(kdt_tree, r, q_vals, name)
-            path    = est_wrap(deby_kdt, out_dir)
+            deby_kdt = debeyeEst_kdt(kdt_tree, r, q_vals)
+            path    = out_dir//"/"//"debeye_kdt_"//name//".csv"
+            call est_wrap(deby_kdt, path)
             print*, "analysis saved at: ", path
             print*, ""
 
             print*, "Running propEst_radial..."
-            prop_rad = propEst_radial(kdt_tree, q_vals, a, e, c, name)
-            path     = est_wrap(prop_rad, out_dir)
+            prop_rad = propEst_radial(kdt_tree, q_vals, a, e, c)
+            path     = out_dir//"/"//"prop_radial_"//name//".csv"
+            call est_wrap(prop_rad, path)
             print*, "analysis saved at: ", path
             print*, ""
 
             print*, "Running propEst_kdt..."
-            prop_kdt = propEst_kdt(kdt_tree, r, q_vals, a, e, c, name)
-            path     = est_wrap(prop_kdt, out_dir)
+            prop_kdt = propEst_kdt(kdt_tree, r, q_vals, a, e, c)
+            path     = out_dir//"/"//"prop_kdt"//name//".csv"
+            call est_wrap(prop_kdt, path)
             print*, "analysis saved at: ", path
             print*, ""
             
@@ -166,7 +170,7 @@ contains
 
 end module main_mod
 
-program main 
+program saxs_est 
     
     use, intrinsic :: iso_c_binding
     use main_mod
@@ -177,7 +181,7 @@ program main
     integer :: arg_num
     character(len=256) :: xyz_module_list_path, out_dir 
 
-    ! execute main
+    ! execute saxs_est
     arg_num = command_argument_count()
     if (arg_num .ne. 2) then 
         write(error_unit, '(A)') "Program expects 2 arguments!"
@@ -188,4 +192,4 @@ program main
         call cli(trim(xyz_module_list_path), trim(out_dir)) 
     end if
 
-end program main
+end program saxs_est

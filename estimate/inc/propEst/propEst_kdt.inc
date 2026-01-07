@@ -8,15 +8,13 @@
 !! @param[in] a         Advice parameter for estimation (should be >= number of nodes)
 !! @param[in] e         Epsilon parameter for accuracy control (must satisfy 0 < e < 1)
 !! @param[in] c         Rounding mode flag: .true. for ceiling, .false. for floor
-!! @param[in] name      Dataset identifier/name for logging or output
 !!
 !! @return              Returns a tuple containing:
 !!                      - Execution time in nanoseconds (integer)
 !!                      - Array of intensity_estimate type with Q vs I_real values
-function propEst_kdt(k, r, q_vals, a, e, c, name) result(intensity_estimate)
+function propEst_kdt(k, r, q_vals, a, e, c) result(intensity_estimate)
     type(kdt), intent(in) :: k
     real(c_double), intent(in) :: r
-    character(len=*), intent(in) :: name
     real(c_double), intent(in) :: a  !< Advice parameter (>= # nodes)
     real(c_double), intent(in) :: e  !< Epsilon (0 < e < 1)
     logical, intent(in) :: c         !< Ceiling flag
@@ -25,9 +23,9 @@ function propEst_kdt(k, r, q_vals, a, e, c, name) result(intensity_estimate)
     type(atom), dimension(:), allocatable :: atoms             
     integer :: n_atoms
     real(c_double), dimension(:), intent(in) :: q_vals
-    real(c_double), dimension(:) :: intensity
+    real(c_double), dimension(:), allocatable :: intensity
     real(c_double) :: norm                                 
-    integer :: i, j, q_ij
+    integer :: i, j, q_ij, n_q
     real(c_double) :: q_val 
     
     ! timing variables
@@ -50,8 +48,11 @@ function propEst_kdt(k, r, q_vals, a, e, c, name) result(intensity_estimate)
     ! start timer, initialize
     call system_clock(start, rate)
     
+    ! initialize local variables
+    n_q = size(q_vals)
     n_atoms = k%size()
-    allocate(atoms(n_atoms))                                   
+    allocate(atoms(n_atoms))
+    allocate(intensity(n_q))                                   
     atoms = k%atoms()
     norm = real(n_atoms ** 2, kind=c_double)
     
@@ -87,9 +88,9 @@ function propEst_kdt(k, r, q_vals, a, e, c, name) result(intensity_estimate)
     timing = int((finish - start) / rate, kind=c_int)
     
     ! output estimate
-    intensity_estimate = new_intensity(timing, q_vals, intensity, name)
+    intensity_estimate = new_intensity(timing, q_vals, intensity)
     
     ! cleanup
     deallocate(atoms)
     
-end function prop_kdt
+end function propEst_kdt
