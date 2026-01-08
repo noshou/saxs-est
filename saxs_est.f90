@@ -1,9 +1,8 @@
 ! cli module
 module main_mod
     use, intrinsic :: iso_c_binding
-    use estimate_mod
-    use form_fact_mod, only: get_q_values
-    use csv_interface_mod
+    use kdt_mod; use atom_mod; use estimate_mod
+    use form_fact_mod; use csv_interface_mod
     
     ! generated atom modules "use"
     include "_build/inc/mod_uses.inc"
@@ -14,7 +13,6 @@ module main_mod
     public :: cli
 
 contains
-
     !! command line interface for running tests
     subroutine cli(xyz_module_list_path, out_dir)
         
@@ -27,11 +25,11 @@ contains
         type(kdt) :: kdt_tree
         type(atom), dimension(:), allocatable :: atoms  
         real(c_double), allocatable :: q_vals(:)
-        character(len=*) :: name
+        character(len=256) :: name
         
         ! variables for file I/O
-        integer :: xyz_unit, iostat_val, s, e, m, atms  ! FIXED: Added atms
-        character(len=200) :: buff, mode
+        integer :: xyz_unit, iostat_val, s, end_pos, m, atms  ! FIXED: Added atms
+        character(len=256) :: buff, mode
         character(len=*), parameter :: xyz_start_match = "xyz_"
         character(len=*), parameter :: xyz_end_match = "_mod.mod"
         
@@ -59,9 +57,9 @@ contains
 
             ! match name of molecule
             s = len(xyz_start_match)
-            e = len(xyz_end_match)
-            m = len(trim(buff)) - s - e
-            name = trim(buff)(s+1:len_trim(buff) - e)
+            end_pos = len(xyz_end_match)
+            m = len(trim(buff)) - s - end_pos
+            name = trim(buff(s+1:len_trim(buff) - end_pos))
             
             ! add switch cases here - defines which atom module to use
             include "_build/inc/mod_switches.inc"
@@ -133,7 +131,7 @@ contains
             print*, "Running debeyeEst_radial..."
             deby_rad = debeyeEst_radial(atoms, q_vals)  ! FIXED: atoms not kdt_tree
             path    = out_dir//"/"//"debeye_radial_"//name//".csv"
-            est_wrap(deby_rad, path)
+            call est_wrap(deby_rad, path)
             print*, "analysis saved at: ", path
             print*, ""
 
@@ -172,24 +170,67 @@ end module main_mod
 
 program saxs_est 
     
-    use, intrinsic :: iso_c_binding
-    use main_mod
-    use, intrinsic :: iso_fortran_env
-    implicit none
-    
-    ! local variables
-    integer :: arg_num
-    character(len=256) :: xyz_module_list_path, out_dir 
+use, intrinsic :: iso_c_binding
+use main_mod
+use, intrinsic :: iso_fortran_env
+implicit none
 
-    ! execute saxs_est
-    arg_num = command_argument_count()
-    if (arg_num .ne. 2) then 
-        write(error_unit, '(A)') "Program expects 2 arguments!"
-        stop 1
-    else 
-        call get_command_argument(1, xyz_module_list_path)
-        call get_command_argument(2, out_dir)
-        call cli(trim(xyz_module_list_path), trim(out_dir)) 
+! local variables
+integer :: arg_num
+character(len=256) :: arg1, xyz_module_list_path, out_dir 
+
+! get number of arguments
+arg_num = command_argument_count()
+
+! check for help flag or incorrect arguments
+if (arg_num == 1) then
+    call get_command_argument(1, arg1)
+    if (trim(arg1) == '-h' .or. trim(arg1) == '--help') then
+        call print_help()
+        stop 0
     end if
+end if
+
+! validate argument count
+if (arg_num /= 2) then 
+    write(error_unit, '(A)') "ERROR: Invalid number of arguments"
+    write(error_unit, '(A)') ""
+    call print_usage()
+    stop 1
+end if
+
+! get arguments and execute
+call get_command_argument(1, xyz_module_list_path)
+call get_command_argument(2, out_dir)
+call cli(trim(xyz_module_list_path), trim(out_dir)) 
+
+contains
+
+    subroutine print_help()
+        write(output_unit, '(A)') "saxs_est - Small Angle X-ray Scattering Estimation"
+        write(output_unit, '(A)') ""
+        write(output_unit, '(A)') "DESCRIPTION:"
+        write(output_unit, '(A)') "  Calculates SAXS intensity profiles for protein structures"
+        write(output_unit, '(A)') "  using the Debye equation and propagator methods."
+        write(output_unit, '(A)') ""
+        call print_usage()
+        write(output_unit, '(A)') ""
+        write(output_unit, '(A)') "ARGUMENTS:"
+        write(output_unit, '(A)') "  xyz_module_list   Path to file containing list of XYZ modules to process"
+        write(output_unit, '(A)') "  output_directory  Directory where CSV results will be written"
+        write(output_unit, '(A)') ""
+        write(output_unit, '(A)') "EXAMPLES:"
+        write(output_unit, '(A)') "  saxs_est _build/xyz_modules.txt ./results/"
+        write(output_unit, '(A)') "  saxs_est molecules.txt output/"
+        write(output_unit, '(A)') ""
+        write(output_unit, '(A)') "OPTIONS:"
+        write(output_unit, '(A)') "  -h, --help        Display this help message"
+    end subroutine print_help
+
+    subroutine print_usage()
+        write(error_unit, '(A)') "USAGE:"
+        write(error_unit, '(A)') "  saxs_est <xyz_module_list> <output_directory>"
+        write(error_unit, '(A)') "  saxs_est -h | --help"
+    end subroutine print_usage
 
 end program saxs_est

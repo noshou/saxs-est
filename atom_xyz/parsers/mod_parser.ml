@@ -26,7 +26,7 @@ let rec print_cases case xyz_list = match xyz_list with
     | [] -> case
     | xyz :: rest -> 
         let new_case = 
-            Printf.sprintf "\n        case(\"%s\")\n                atoms = xyz_%s_mod%%get_atoms()" xyz xyz
+            Printf.sprintf "\n        case(\"%s\")\n                atoms = get_atoms_xyz_%s()" xyz xyz
         in
         print_cases (case ^ new_case) rest
 

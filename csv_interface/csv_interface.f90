@@ -1,5 +1,5 @@
 !> Fortran-OCaml bridge for exporting intensity estimates to CSV
-module csv_interface
+module csv_interface_mod
     use, intrinsic :: iso_c_binding; use estimate_mod
     implicit none; private; public :: est_wrap
     
@@ -47,4 +47,4 @@ contains
 
     end subroutine est_wrap
     
-end module csv_interface
+end module csv_interface_mod

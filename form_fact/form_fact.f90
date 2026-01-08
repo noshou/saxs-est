@@ -17,7 +17,7 @@ module form_fact_mod
     implicit none
     
     private
-    public :: form_fact
+    public :: form_fact, get_q_values
     
 contains
 

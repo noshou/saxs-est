@@ -108,6 +108,12 @@ PDB_OBJ      = $(OBJ_DIR)/pdb_to_xyz.o
 PDB_EXE      = $(EXE_DIR)/pdb_to_xyz
 
 # ============================================================================
+# MAIN EXECUTABLE CONFIGURATION
+# ============================================================================
+MAIN_EXE	 = $(EXE_DIR)/saxs_est
+MAIN_SRC	 = saxs_est.f90
+
+# ============================================================================
 # PHONY TARGETS
 # ============================================================================
 .PHONY: all form_fact atom_xyz clean clean-build \
@@ -120,13 +126,14 @@ PDB_EXE      = $(EXE_DIR)/pdb_to_xyz
 # ============================================================================
 # ALL TARGET
 # ============================================================================
-all: build-dirs form_fact atom_xyz kdt estimate compile-pdb-2-xyz csv-interface clean-objects postamble
+all: build-dirs form_fact atom_xyz kdt estimate compile-pdb-2-xyz csv-interface main clean-objects postamble
 
 help:
 	@echo "Usage: make -f Compile.mk <target>"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  all              - Build all libraries and executables"
+	@echo "  main             - Build main SAXS estimation executable"
 	@echo "  form_fact        - Build form_fact library only"
 	@echo "  atom_xyz         - Build atom_xyz library only"
 	@echo "  kdt              - Build kdt library only"
@@ -259,7 +266,7 @@ $(EST_LIB): $(EST_OBJ)
 csv-interface: build-dirs check-deps-csv $(CSV_LIB)
 
 $(CSV_BRD_OBJ): $(CSV_BRD_SRC)
-	@$(CC) -I$(shell ocamlc -where) -c -o $@ $<
+	@$(CC) -I$(shell ocamlc -where) -DCAML_NAME_SPACE -fPIC -c -o $@ $<
 
 $(CSV_OUT_OBJ): $(CSV_OUT_SRC)
 	@$(OC) -output-obj -package csv -linkpkg -o $@ $<
@@ -270,6 +277,16 @@ $(CSV_API_OBJ): $(CSV_API_SRC)
 $(CSV_LIB): $(CSV_BRD_OBJ) $(CSV_OUT_OBJ) $(CSV_API_OBJ)
 	@ar rcs $@ $^
 
+# ============================================================================
+# MAIN EXECUTABLE BUILD
+# ============================================================================
+main: $(MAIN_EXE)
+$(MAIN_EXE): $(MAIN_SRC) $(wildcard $(LIB_DIR)/*.a)
+	@$(FC) $(CFLAGS) -I$(MOD_DIR) $(MAIN_SRC) \
+	$(FF_LIB) $(AXY_LIB) $(KDT_LIB) $(EST_LIB) \
+	$(CSV_BRD_OBJ) $(CSV_OUT_OBJ) $(CSV_API_OBJ) \
+	-L$(shell ocamlc -where) -lasmrun_pic -ldl -lm -lpthread \
+	-o $(MAIN_EXE)
 # ============================================================================
 # OCAML DEPENDENCY CHECKING
 # ============================================================================
@@ -333,6 +350,7 @@ postamble:
 	@echo "=================================="
 	@echo "Compilation complete"
 	@echo "Compiled xyz molecules: $(AXY_LST)"
+	@echo "Executable: $(MAIN_EXE)"
 	@echo "=================================="
 
 # ============================================================================
