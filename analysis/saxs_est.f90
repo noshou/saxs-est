@@ -131,17 +131,17 @@ contains
             
             ! Run raw analysis
             
-            print*, "Running debeyeEst_radial..."
-            deby_rad = debeyeEst_radial(atoms, q_vals)
-            path    = trim(out_dir)//"/"//"debeye_radial_"//trim(name)//".csv"
+            print*, "Running debyeEst_radial..."
+            deby_rad = debyeEst_radial(atoms, q_vals)
+            path    = trim(out_dir)//"/"//"debye_radial_"//trim(name)//".csv"
             call est_wrap(deby_rad, path)
             print*, "timing: ", deby_rad%timing, "s"
             print*, ""
             path1    = path
             
-            print*, "Running debeyeEst_kdt..."
-            deby_kdt = debeyeEst_kdt(kdt_tree, r, q_vals)
-            path    = trim(out_dir)//"/"//"debeye_kdt_"//trim(name)//".csv"
+            print*, "Running debyeEst_kdt..."
+            deby_kdt = debyeEst_kdt(kdt_tree, r, q_vals)
+            path    = trim(out_dir)//"/"//"debye_kdt_"//trim(name)//".csv"
             call est_wrap(deby_kdt, path)
             print*, "timing: ", deby_kdt%timing, "s"
             print*, ""

@@ -15,7 +15,7 @@ main <- function() {
 
     # get cli args for files, load into dataframe
     # NOTE: first arg assumed to be output directory, 
-    # second arg assumed to be control (debeye_radial)
+    # second arg assumed to be control (debye_radial)
     args <- commandArgs(trailingOnly = TRUE)
     if (length(args) < 3) {
         stop("Usage: standardized.R cntrl.csv file2.csv ...")
@@ -28,13 +28,20 @@ main <- function() {
     names(df_og)[2] <- name
     names(df)[2]    <- name
     df[[2]] <- normalize(df[[2]])
-    
-    # loop through rest and add to df
+
+    # loop through rest, add to df, calculate RMSE
     for (i in 3:length(args)) {
+        
+        # populate dataframes
         name <- tools::file_path_sans_ext(basename(args[i]))
         temp <- read_csv(args[i], show_col_types = FALSE)[[2]]
+        if (length(temp) != nrow(df)) {stop(paste("Length mismatch in", args[i]))}
         df[name]    <- normalize(temp)
         df_og[name] <- temp
+
+        # calculate RMSE
+        rmse <- sqrt(sum((df[[name]]-df[[2]])^2) / nrow(df))
+        cat("RMSE for ", name, ": ", rmse, "\n")
     }
 
     # write dataframes to csv
@@ -53,6 +60,7 @@ main <- function() {
     for (i in 2:length(args)) {
         unlink(args[i])
     }
+
 }
 
 main()

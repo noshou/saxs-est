@@ -113,17 +113,19 @@ MAIN_MOD     = $(MOD_DIR)/main_mod.mod
 # ============================================================================
 # PHONY TARGETS
 # ============================================================================
-.PHONY: all form_fact atom_xyz clean clean-build \
+.PHONY: all all1 all2 form_fact atom_xyz clean clean-build \
         parse-f0 parse-f1_f2 parse-xyz check-ocaml check-deps-csv \
         check-deps-yojson check-deps-str help clean-formfacts \
         clean-objects parse-xyz tabulate-xyz estimate \
-        postamble kdt compile-pdb-2-xyz \
+        postamble kdt compile-pdb-2-xyz make-outdir \
         generate-xyz-includes csv-interface help
 
 # ============================================================================
 # ALL TARGET
 # ============================================================================
-all: build-dirs form_fact atom_xyz kdt estimate $(PDB_TARGET) csv-interface main clean-objects postamble
+all: all1 all2
+all1: build-dirs form_fact atom_xyz kdt estimate 
+all2: $(PDB_TARGET) csv-interface main clean-objects postamble
 
 # ============================================================================
 # HELP TARGET
@@ -350,8 +352,6 @@ pdb-2-xyz:
 	@read -p "Enter xyz filename: " file; \
 	./$(PDB_EXE) $$file; \
 	mv *.xyz $(AXY_DATA_DIR)
-
-# R ANALYSIS
 
 
 # ============================================================================
