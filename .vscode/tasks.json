@@ -27,6 +27,16 @@
             "problemMatcher": ["$gcc"]
         },
         {
+            "label": "run",
+            "type": "shell",
+            "command": "./_build/release/exe/saxs_est _build/release/xyz_modules.txt out",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "dependsOn": "build-release"
+        },
+        {
             "label": "clean",
             "type": "shell",
             "command": "make",

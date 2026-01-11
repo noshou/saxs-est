@@ -3,12 +3,12 @@
 # ============================================================================
 
 # ============================================================================
-# COMPILER CONFIGURATION
+# COMPILER CONFIGURATIONS
 # ============================================================================
-CC           = gcc -w -g
-FC           = gfortran
-OCAMLFIND    = ocamlfind
-OC           = $(OCAMLFIND) ocamlopt
+CC           = gcc -w -g 			 # c compiler
+FC           = gfortran  			 # fortran compiler
+OCAMLFIND    = ocamlfind 
+OC           = $(OCAMLFIND) ocamlopt # ocaml compiler
 OPAM         = opam
 
 # ============================================================================
@@ -106,7 +106,8 @@ PDB_EXE      = $(EXE_DIR)/pdb_to_xyz
 # ============================================================================
 # MAIN EXECUTABLE CONFIGURATION
 # ============================================================================
-MAIN_SRC     = saxs_est.f90
+MAIN_DIR 	 = analysis
+MAIN_SRC     = $(MAIN_DIR)/saxs_est.f90
 MAIN_MOD     = $(MOD_DIR)/main_mod.mod
 
 # ============================================================================
@@ -349,6 +350,9 @@ pdb-2-xyz:
 	@read -p "Enter xyz filename: " file; \
 	./$(PDB_EXE) $$file; \
 	mv *.xyz $(AXY_DATA_DIR)
+
+# R ANALYSIS
+
 
 # ============================================================================
 # POSTAMBLE

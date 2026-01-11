@@ -1,9 +1,11 @@
 # main entry point to build project
+SHELL := /bin/bash
+.SHELLFLAGS := -o pipefail -c
 
 .PHONY: release debug clean clean-all help
 
 release:
-	@$(MAKE) --no-print-directory -f BuildRelease.mk all
+	@$(MAKE) --no-print-directory -f BuildRelease.mk all 	
 
 debug:
 	@$(MAKE) --no-print-directory -f BuildDebug.mk all
