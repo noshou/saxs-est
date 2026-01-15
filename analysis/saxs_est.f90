@@ -149,7 +149,7 @@ contains
                 print*, "Rounding mode:"
                 print*, "  DOWN: round down"
                 print*, "  UP:   round up"
-                write(*, '(A)', advance='no') "Enter choice: "
+                write(*, '(A)', advance='no') " Enter choice: "
                 read(*,*) mode
                 if (mode .eq. "DOWN" ) then
                     c = .false.
@@ -252,7 +252,7 @@ contains
         ! Run raw analysis
         ! Any ERROR STOP here will exit this subprocess with non-zero status,
         ! which the parent process will catch and handle gracefully.
-
+        print*,""
         print*, "Running debyeEst_radial..."
         deby_rad = debyeEst_radial(atoms, q_vals)
         path    = path1
